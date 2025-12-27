@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "220862448660",
+    "project_id": "dineflow-hackathon",
+    "storage_bucket": "dineflow-hackathon.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:220862448660:android:57d9c215eb32a969895301",
+        "android_client_info": {
+          "package_name": "com.example.dineflow_manager"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD2uO1nDYerBDj9vRYvu-pXJ0mTh3whgAQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
