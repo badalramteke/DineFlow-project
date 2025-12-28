@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/theme.dart';
 import '../../profile/screens/profile_screen.dart';
+import 'reviews_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -77,6 +78,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 horizontal: AppTheme.outerPadding,
               ),
               children: [
+                // 0. Restaurant Section
+                _buildSectionHeader("Restaurant", subTextColor),
+                const SizedBox(height: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: borderColor),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildListTile(
+                        icon: Icons.star_outline,
+                        title: "Customer Reviews",
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ReviewsScreen(),
+                            ),
+                          );
+                        },
+                        textColor: textColor,
+                        iconColor: subTextColor,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
                 // 1. Account Section
                 _buildSectionHeader("Account", subTextColor),
                 const SizedBox(height: 8),

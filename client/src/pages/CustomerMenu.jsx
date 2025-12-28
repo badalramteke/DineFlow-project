@@ -9,8 +9,10 @@ import {
   where,
   doc,
   getDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { Star } from "lucide-react"; // Assuming lucide-react is installed or I'll use text stars if not
 
 // ⚠️ PASTE YOUR API KEY HERE
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
@@ -45,6 +47,12 @@ export default function CustomerMenu() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef(null);
+
+  // Review State
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewOrderId, setReviewOrderId] = useState(null);
+  const [serviceRating, setServiceRating] = useState(0);
+  const [foodRating, setFoodRating] = useState(0);
 
   // Save Cart
   useEffect(() => {
@@ -91,11 +99,61 @@ export default function CustomerMenu() {
       setOrderedItemsCount(counts);
     });
 
+    // D. Get COMPLETED ORDERS for Review
+    const qPaidOrders = query(
+      collection(db, "restaurants", restroId, "orders"),
+      where("tableId", "==", tableId),
+      where("paymentStatus", "==", "Paid")
+    );
+
+    const unsubPaid = onSnapshot(qPaidOrders, (snapshot) => {
+      const myOrders = JSON.parse(localStorage.getItem("my_orders") || "[]");
+      const paidOrders = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+      // Only show review for orders placed by THIS device (stored in localStorage)
+      const unreviewed = paidOrders.find((o) => {
+        return !o.review && myOrders.includes(o.id);
+      });
+
+      if (unreviewed) {
+        setReviewOrderId(unreviewed.id);
+        setShowReviewModal(true);
+      }
+    });
+
     return () => {
       unsubMenu();
       unsubOrders();
+      unsubPaid();
     };
   }, [restroId, tableId]);
+
+  const submitReview = async () => {
+    if (!reviewOrderId) return;
+
+    try {
+      const avgRating = (serviceRating + foodRating) / 2;
+      await updateDoc(
+        doc(db, "restaurants", restroId, "orders", reviewOrderId),
+        {
+          review: {
+            rating: avgRating,
+            serviceRating,
+            foodRating,
+            createdAt: new Date(),
+          },
+        }
+      );
+      setShowReviewModal(false);
+      // Reset form
+      setServiceRating(0);
+      setFoodRating(0);
+      alert("Thank you for your feedback!");
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      alert("Failed to submit review. Please try again.");
+    }
+  };
 
   // --- CART LOGIC ---
   const addToCart = (item) => {
@@ -154,14 +212,21 @@ export default function CustomerMenu() {
     };
 
     try {
-      await addDoc(
+      const docRef = await addDoc(
         collection(db, "restaurants", restroId, "orders"),
         orderData
       );
+
+      // Save Order ID to LocalStorage to track "my" orders for reviews
+      const myOrders = JSON.parse(localStorage.getItem("my_orders") || "[]");
+      myOrders.push(docRef.id);
+      localStorage.setItem("my_orders", JSON.stringify(myOrders));
+
       setCart({});
       localStorage.removeItem("dineflow_cart");
       setShowCartModal(false);
-      alert("Order Placed Successfully! 👨‍🍳");
+      // alert("Order Placed Successfully! 👨‍🍳");
+      navigate(`/checkout/${restroId}/${tableId}`);
     } catch (error) {
       console.error("Error placing order:", error);
       alert("Failed to place order. Please try again.");
@@ -203,20 +268,25 @@ export default function CustomerMenu() {
       const result = await model.generateContent(prompt);
       const responseText = await result.response.text();
 
-      // Clean up potential markdown code blocks
-      const cleanJson = responseText.replace(/```json|```/g, "").trim();
-
       let aiMsg;
       try {
-        const parsed = JSON.parse(cleanJson);
-        aiMsg = {
-          role: "ai",
-          text: parsed.text,
-          recommendations: parsed.recommendedItemIds || [],
-        };
+        // Attempt to find JSON object within the response (handling potential extra text)
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const jsonString = jsonMatch[0];
+          const parsed = JSON.parse(jsonString);
+          aiMsg = {
+            role: "ai",
+            text: parsed.text,
+            recommendations: parsed.recommendedItemIds || [],
+          };
+        } else {
+          throw new Error("No JSON found");
+        }
       } catch (e) {
-        // Fallback
-        aiMsg = { role: "ai", text: responseText };
+        // Fallback: just show the raw text if parsing fails
+        const cleanText = responseText.replace(/```json|```/g, "").trim();
+        aiMsg = { role: "ai", text: cleanText };
       }
 
       setMessages((prev) => [...prev, aiMsg]);
@@ -736,6 +806,98 @@ export default function CustomerMenu() {
                 className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20"
               >
                 ➤
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* REVIEW MODAL */}
+      {showReviewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-[#1E1F23] w-full max-w-md rounded-2xl p-6 border border-gray-800 shadow-2xl">
+            <h2 className="text-2xl font-bold text-white mb-6 text-center">
+              Rate Your Experience
+            </h2>
+
+            {/* Service Rating */}
+            <div className="mb-6">
+              <p className="text-gray-300 text-center mb-3 text-sm font-medium">
+                How was the service?
+              </p>
+              <div className="flex justify-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={`service-${star}`}
+                    onClick={() => setServiceRating(star)}
+                    className="transition-transform hover:scale-110 focus:outline-none"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="32"
+                      height="32"
+                      viewBox="0 0 24 24"
+                      fill={star <= serviceRating ? "#FFD700" : "none"}
+                      stroke={star <= serviceRating ? "#FFD700" : "#4B5563"}
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Food Rating */}
+            <div className="mb-8">
+              <p className="text-gray-300 text-center mb-3 text-sm font-medium">
+                How was the food?
+              </p>
+              <div className="flex justify-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={`food-${star}`}
+                    onClick={() => setFoodRating(star)}
+                    className="transition-transform hover:scale-110 focus:outline-none"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="32"
+                      height="32"
+                      viewBox="0 0 24 24"
+                      fill={star <= foodRating ? "#FFD700" : "none"}
+                      stroke={star <= foodRating ? "#FFD700" : "#4B5563"}
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowReviewModal(false)}
+                className="flex-1 py-3 rounded-xl bg-gray-800 text-gray-300 font-semibold hover:bg-gray-700 transition-colors"
+              >
+                Skip
+              </button>
+              <button
+                onClick={submitReview}
+                disabled={serviceRating === 0 || foodRating === 0}
+                className={`flex-1 py-3 rounded-xl font-bold text-white transition-colors ${
+                  serviceRating > 0 && foodRating > 0
+                    ? "bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/20"
+                    : "bg-gray-700 cursor-not-allowed text-gray-500"
+                }`}
+              >
+                Submit Review
               </button>
             </div>
           </div>
