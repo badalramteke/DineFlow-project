@@ -87,6 +87,7 @@ class _OrdersScreenState extends State<OrdersScreen>
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: AppTheme.cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -95,141 +96,163 @@ class _OrdersScreenState extends State<OrdersScreen>
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Confirm Payment",
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Table ${order.tableNumber}",
-                        style: GoogleFonts.poppins(
-                          color: Colors.white70,
-                          fontSize: 16,
-                        ),
+              padding: EdgeInsets.only(
+                left: 24.0,
+                right: 24.0,
+                top: 24.0,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Confirm Payment",
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
-                      Text(
-                        "Total: ₹${order.grandTotal}",
-                        style: GoogleFonts.poppins(
-                          color: AppTheme.accentGreen,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white10,
-                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "Ordered Items:",
+                          "Table ${order.tableNumber}",
                           style: GoogleFonts.poppins(
-                            color: Colors.grey,
-                            fontSize: 12,
+                            color: Colors.white70,
+                            fontSize: 16,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        ...order.items.map(
-                          (item) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "${item.qty}x ${item.name}",
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white70,
-                                  ),
-                                ),
-                                Text(
-                                  "₹${item.price * item.qty}",
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
+                        Text(
+                          "Total: ₹${order.grandTotal}",
+                          style: GoogleFonts.poppins(
+                            color: AppTheme.accentGreen,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const Divider(color: Colors.white24, height: 32),
-                  Text(
-                    "Payment Method",
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white10,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Ordered Items:",
+                            style: GoogleFonts.poppins(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxHeight: 200),
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: order.items
+                                    .map(
+                                      (item) => Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 4,
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                "${item.qty}x ${item.name}",
+                                                style: GoogleFonts.poppins(
+                                                  color: Colors.white70,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            Text(
+                                              "₹${item.price * item.qty}",
+                                              style: GoogleFonts.poppins(
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 10,
-                    children: ['Cash', 'UPI', 'Card'].map((method) {
-                      final isSelected = selectedMethod == method;
-                      return ChoiceChip(
-                        label: Text(method),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          if (selected) {
-                            setModalState(() {
-                              selectedMethod = method;
-                            });
-                          }
+                    const Divider(color: Colors.white24, height: 32),
+                    Text(
+                      "Payment Method",
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      children: ['Cash', 'UPI', 'Card'].map((method) {
+                        final isSelected = selectedMethod == method;
+                        return ChoiceChip(
+                          label: Text(method),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setModalState(() {
+                                selectedMethod = method;
+                              });
+                            }
+                          },
+                          selectedColor: AppTheme.accentGreen,
+                          backgroundColor: Colors.white10,
+                          labelStyle: GoogleFonts.poppins(
+                            color: isSelected ? Colors.white : Colors.white70,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _markAsPaid(restaurantId, order.id, selectedMethod);
+                          Navigator.pop(context);
                         },
-                        selectedColor: AppTheme.accentGreen,
-                        backgroundColor: Colors.white10,
-                        labelStyle: GoogleFonts.poppins(
-                          color: isSelected ? Colors.white : Colors.white70,
-                          fontWeight: FontWeight.bold,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.purple,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _markAsPaid(restaurantId, order.id, selectedMethod);
-                        Navigator.pop(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.purple,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        "Confirm Payment Received",
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                        child: Text(
+                          "Confirm Payment Received",
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           },
@@ -345,7 +368,12 @@ class _OrdersScreenState extends State<OrdersScreen>
                 itemCount: filteredOrders.length,
                 itemBuilder: (context, index) {
                   final order = filteredOrders[index];
-                  return _buildOrderCard(restaurantId, order);
+                  return OrderCard(
+                    order: order,
+                    restaurantId: restaurantId,
+                    onUpdateStatus: _updateStatus,
+                    onShowPayment: _showPaymentDialog,
+                  );
                 },
               );
             },
@@ -354,8 +382,34 @@ class _OrdersScreenState extends State<OrdersScreen>
       ),
     );
   }
+}
 
-  Widget _buildOrderCard(String restId, OrderModel order) {
+class OrderCard extends StatefulWidget {
+  final OrderModel order;
+  final String restaurantId;
+  final Function(String, String, String) onUpdateStatus;
+  final Function(BuildContext, String, OrderModel) onShowPayment;
+
+  const OrderCard({
+    super.key,
+    required this.order,
+    required this.restaurantId,
+    required this.onUpdateStatus,
+    required this.onShowPayment,
+  });
+
+  @override
+  State<OrderCard> createState() => _OrderCardState();
+}
+
+class _OrderCardState extends State<OrderCard> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final order = widget.order;
+    final restId = widget.restaurantId;
+
     Color statusColor = AppTheme.accentGreen;
     String status = order.orderStatus;
 
@@ -367,6 +421,9 @@ class _OrdersScreenState extends State<OrdersScreen>
 
     String displayStatus = status.toUpperCase();
     if (status == 'served') displayStatus = 'PAYMENT PENDING';
+
+    final itemsToShow = _expanded ? order.items : order.items.take(3).toList();
+    final hasMore = order.items.length > 3;
 
     return Card(
       color: AppTheme.cardColor,
@@ -425,7 +482,7 @@ class _OrdersScreenState extends State<OrdersScreen>
             const Divider(color: Colors.white24, height: 24),
 
             // Items List
-            ...order.items.map(
+            ...itemsToShow.map(
               (item) => Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
@@ -483,6 +540,26 @@ class _OrdersScreenState extends State<OrdersScreen>
               ),
             ),
 
+            if (hasMore)
+              Center(
+                child: TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _expanded = !_expanded;
+                    });
+                  },
+                  child: Text(
+                    _expanded
+                        ? "Show Less"
+                        : "Show ${order.items.length - 3} More",
+                    style: GoogleFonts.poppins(
+                      color: AppTheme.accentGreen,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+
             const Divider(color: Colors.white24, height: 24),
 
             // Footer: Total & Actions
@@ -499,7 +576,8 @@ class _OrdersScreenState extends State<OrdersScreen>
                 const Spacer(),
                 if (status == 'pending')
                   ElevatedButton(
-                    onPressed: () => _updateStatus(restId, order.id, 'cooking'),
+                    onPressed: () =>
+                        widget.onUpdateStatus(restId, order.id, 'cooking'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.accentGreen,
                     ),
@@ -510,7 +588,8 @@ class _OrdersScreenState extends State<OrdersScreen>
                   ),
                 if (status == 'cooking')
                   ElevatedButton(
-                    onPressed: () => _updateStatus(restId, order.id, 'ready'),
+                    onPressed: () =>
+                        widget.onUpdateStatus(restId, order.id, 'ready'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                     ),
@@ -521,7 +600,8 @@ class _OrdersScreenState extends State<OrdersScreen>
                   ),
                 if (status == 'ready')
                   ElevatedButton(
-                    onPressed: () => _updateStatus(restId, order.id, 'served'),
+                    onPressed: () =>
+                        widget.onUpdateStatus(restId, order.id, 'served'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                     ),
@@ -532,7 +612,8 @@ class _OrdersScreenState extends State<OrdersScreen>
                   ),
                 if (status == 'served')
                   ElevatedButton(
-                    onPressed: () => _showPaymentDialog(context, restId, order),
+                    onPressed: () =>
+                        widget.onShowPayment(context, restId, order),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.purple,
                     ),

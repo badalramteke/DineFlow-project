@@ -441,36 +441,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            Row(
-                              children: [
-                                _pillTab(
-                                  label: "1D",
-                                  active: _moneyRange == '1D',
-                                  onTap: () =>
-                                      setState(() => _moneyRange = '1D'),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                reverse: true,
+                                child: Row(
+                                  children: [
+                                    _pillTab(
+                                      label: "1D",
+                                      active: _moneyRange == '1D',
+                                      onTap: () =>
+                                          setState(() => _moneyRange = '1D'),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    _pillTab(
+                                      label: "1W",
+                                      active: _moneyRange == '1W',
+                                      onTap: () =>
+                                          setState(() => _moneyRange = '1W'),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    _pillTab(
+                                      label: "1M",
+                                      active: _moneyRange == '1M',
+                                      onTap: () =>
+                                          setState(() => _moneyRange = '1M'),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    _pillTab(
+                                      label: "1Y",
+                                      active: _moneyRange == '1Y',
+                                      onTap: () =>
+                                          setState(() => _moneyRange = '1Y'),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 6),
-                                _pillTab(
-                                  label: "1W",
-                                  active: _moneyRange == '1W',
-                                  onTap: () =>
-                                      setState(() => _moneyRange = '1W'),
-                                ),
-                                const SizedBox(width: 6),
-                                _pillTab(
-                                  label: "1M",
-                                  active: _moneyRange == '1M',
-                                  onTap: () =>
-                                      setState(() => _moneyRange = '1M'),
-                                ),
-                                const SizedBox(width: 6),
-                                _pillTab(
-                                  label: "1Y",
-                                  active: _moneyRange == '1Y',
-                                  onTap: () =>
-                                      setState(() => _moneyRange = '1Y'),
-                                ),
-                              ],
+                              ),
                             ),
                           ],
                         ),

@@ -21,7 +21,7 @@ class _MenuScreenState extends State<MenuScreen> {
   final List<String> _categories = [
     "All Dishes",
     "Main Course",
-    "Appetizers",
+    "Starters",
     "Beverages",
     "Desserts",
   ];

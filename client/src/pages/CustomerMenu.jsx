@@ -34,7 +34,7 @@ export default function CustomerMenu() {
 
   // UI States
   const [activeCategory, setActiveCategory] = useState("All");
-  const [isVegOnly, setIsVegOnly] = useState(false);
+  const [foodTypeFilter, setFoodTypeFilter] = useState("all"); // "all", "veg", "non-veg"
   const [showCartModal, setShowCartModal] = useState(false);
 
   // AI States
@@ -243,22 +243,37 @@ export default function CustomerMenu() {
   }, [messages]);
 
   // --- FILTERING ---
-  const categories = ["All", ...new Set(menu.map((item) => item.category))];
+  const normalizeCategory = (cat) => {
+    if (!cat) return "Other";
+    const lower = cat.toLowerCase().trim();
+    if (lower === "starter" || lower === "appetizers" || lower === "appetizer")
+      return "Starters";
+    return cat;
+  };
+
+  const categories = [
+    "All",
+    ...new Set(menu.map((item) => normalizeCategory(item.category))),
+  ];
   const filteredMenu = menu.filter((item) => {
+    const itemCategory = normalizeCategory(item.category);
     const matchesCategory =
-      activeCategory === "All" || item.category === activeCategory;
-    const matchesVeg = isVegOnly ? item.isVeg === true : true;
-    return matchesCategory && matchesVeg;
+      activeCategory === "All" || itemCategory === activeCategory;
+
+    let matchesType = true;
+    if (foodTypeFilter === "veg") matchesType = item.isVeg === true;
+    if (foodTypeFilter === "non-veg") matchesType = item.isVeg === false;
+
+    return matchesCategory && matchesType;
   });
 
   // Group items by category for the "All" view or just generally to show sections
   const groupedMenu = filteredMenu.reduce((acc, item) => {
-    const cat = item.category || "Other";
+    const cat = normalizeCategory(item.category);
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(item);
     return acc;
   }, {});
-
   const activeTrackingOrders = pendingOrders.filter((o) =>
     ["pending", "cooking", "ready"].includes(o.orderStatus?.toLowerCase())
   );
@@ -287,22 +302,41 @@ export default function CustomerMenu() {
               </button>
             )}
 
-            {/* Veg Toggle */}
-            <button
-              onClick={() => setIsVegOnly(!isVegOnly)}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
-                isVegOnly
-                  ? "bg-[#00C853]/10 border-[#00C853] text-[#00C853]"
-                  : "bg-[#1E1F23] border-gray-700 text-gray-400"
-              }`}
-            >
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  isVegOnly ? "bg-[#00C853]" : "bg-gray-500"
+            {/* Food Type Filter Buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setFoodTypeFilter("all")}
+                className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${
+                  foodTypeFilter === "all"
+                    ? "bg-blue-600/10 border-blue-600 text-blue-600"
+                    : "bg-[#1E1F23] border-gray-700 text-gray-400 hover:bg-gray-800"
                 }`}
-              ></span>
-              VEG
-            </button>
+              >
+                ALL
+              </button>
+              <button
+                onClick={() => setFoodTypeFilter("veg")}
+                className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold border transition-all ${
+                  foodTypeFilter === "veg"
+                    ? "bg-[#00C853]/10 border-[#00C853] text-[#00C853]"
+                    : "bg-[#1E1F23] border-gray-700 text-gray-400 hover:bg-gray-800"
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-[#00C853]"></span>
+                VEG
+              </button>
+              <button
+                onClick={() => setFoodTypeFilter("non-veg")}
+                className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold border transition-all ${
+                  foodTypeFilter === "non-veg"
+                    ? "bg-red-600/10 border-red-600 text-red-600"
+                    : "bg-[#1E1F23] border-gray-700 text-gray-400 hover:bg-gray-800"
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-red-600"></span>
+                NON-VEG
+              </button>
+            </div>
           </div>
         </div>
 
