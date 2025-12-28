@@ -13,7 +13,7 @@ import {
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // ⚠️ PASTE YOUR API KEY HERE
-const GEMINI_API_KEY = "AIzaSyDCvJWeXoWumrHnluc4RPBWgDEtKmSqlPw";
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const GEMINI_MODEL = "gemini-2.5-flash";
 
 export default function CustomerMenu() {
@@ -222,9 +222,16 @@ export default function CustomerMenu() {
       setMessages((prev) => [...prev, aiMsg]);
     } catch (error) {
       console.error("AI Error:", error);
+      let errorMsg = "Oops! My brain froze. 🧠 Try again?";
+      if (error.message?.includes("400")) errorMsg += " (Bad Request)";
+      if (error.message?.includes("401")) errorMsg += " (Invalid API Key)";
+      if (error.message?.includes("403")) errorMsg += " (Access Denied)";
+      if (error.message?.includes("404")) errorMsg += " (Model Not Found)";
+      if (error.message?.includes("500")) errorMsg += " (Server Error)";
+
       setMessages((prev) => [
         ...prev,
-        { role: "ai", text: "Oops! My brain froze. 🧠 Try again?" },
+        { role: "ai", text: errorMsg + `\nDetails: ${error.message}` },
       ]);
     } finally {
       setIsTyping(false);
